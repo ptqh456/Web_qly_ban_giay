@@ -177,6 +177,7 @@ function showUsername(name) {
   }
 }
 
+// Cập nhật hàm viewUserInfo để hiển thị lịch sử đơn hàng
 function viewUserInfo() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   if (!currentUser) {
@@ -204,6 +205,138 @@ function viewUserInfo() {
   const addressInput = document.getElementById("infoAddress");
   if (addressInput) {
     addressInput.value = currentUser.address || "";
+  }
+
+  // Hiển thị lịch sử đơn hàng
+  displayOrderHistory(currentUser.username);
+}
+
+// Hiển thị lịch sử đơn hàng
+function displayOrderHistory(username) {
+  const orderHistoryDiv = document.getElementById("orderHistory");
+  if (!orderHistoryDiv) return;
+
+  const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+  const userOrders = orders.filter((order) => order.customer === username);
+
+  if (userOrders.length === 0) {
+    orderHistoryDiv.innerHTML =
+      '<p class="no-orders">Chưa có đơn hàng nào.</p>';
+    return;
+  }
+
+  // Sắp xếp đơn hàng mới nhất lên đầu
+  userOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  let html = '<div class="orders-list">';
+
+  userOrders.forEach((order) => {
+    const statusText = getStatusText(order.status);
+    const statusClass = getStatusClass(order.status);
+
+    html += `
+      <div class="order-card">
+        <div class="order-header">
+          <div class="order-info-left">
+            <span class="order-id">Đơn hàng #${order.id}</span>
+            <span class="order-date">${formatDate(order.date)}</span>
+          </div>
+          <span class="order-status ${statusClass}">${statusText}</span>
+        </div>
+        
+        <div class="order-items">
+          ${order.items
+            .map(
+              (item) => `
+            <div class="order-item">
+              <span class="item-name">${item.name}</span>
+              <span class="item-quantity">x${item.quantity}</span>
+              <span class="item-price">${item.price.toLocaleString(
+                "vi-VN"
+              )}đ</span>
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+        
+        <div class="order-footer">
+          <span class="order-total">Tổng tiền: <strong>${order.total.toLocaleString(
+            "vi-VN"
+          )}đ</strong></span>
+          ${
+            order.status === "new"
+              ? `
+            <button class="btn-cancel-order" onclick="cancelOrder(${order.id})">
+              <i class="bx bx-x"></i> Hủy đơn
+            </button>
+          `
+              : ""
+          }
+        </div>
+      </div>
+    `;
+  });
+
+  html += "</div>";
+  orderHistoryDiv.innerHTML = html;
+}
+
+// Lấy text trạng thái
+function getStatusText(status) {
+  const statusMap = {
+    new: "Đơn mới",
+    processing: "Đang xử lý",
+    delivered: "Đã giao",
+    cancelled: "Đã hủy",
+  };
+  return statusMap[status] || status;
+}
+
+// Lấy class CSS cho trạng thái
+function getStatusClass(status) {
+  const classMap = {
+    new: "status-new",
+    processing: "status-processing",
+    delivered: "status-delivered",
+    cancelled: "status-cancelled",
+  };
+  return classMap[status] || "";
+}
+
+// Format ngày
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+// Hủy đơn hàng
+function cancelOrder(orderId) {
+  if (!confirm("Bạn có chắc muốn hủy đơn hàng này?")) {
+    return;
+  }
+
+  const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+  const orderIndex = orders.findIndex((o) => o.id === orderId);
+
+  if (orderIndex !== -1) {
+    // Chỉ cho phép hủy đơn hàng có trạng thái "new"
+    if (orders[orderIndex].status !== "new") {
+      showToast("Không thể hủy đơn hàng này!", "error");
+      return;
+    }
+
+    orders[orderIndex].status = "cancelled";
+    localStorage.setItem("orders", JSON.stringify(orders));
+
+    showToast("Đã hủy đơn hàng thành công!", "success");
+
+    // Cập nhật lại hiển thị
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    displayOrderHistory(currentUser.username);
   }
 }
 
