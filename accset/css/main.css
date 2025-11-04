@@ -59,43 +59,11 @@ body {
   object-fit: cover;
 }
 
-/* Ô tìm kiếm */
-.search-bar {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  margin: 0 30px;
-}
-
-.search-bar input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 25px 0 0 25px;
-  font-size: 15px;
-  outline: none;
-}
-
-.search-bar button {
-  padding: 8px 16px;
-  border: none;
-  background-color: #1e90ff;
-  color: white;
-  font-weight: bold;
-  border-radius: 0 25px 25px 0;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.search-bar button:hover {
-  background-color: #0078d7;
-}
-
 /* Các icon bên phải */
 .icon-bar {
   display: flex;
   align-items: center;
-  gap: 25px;
+  gap: 20px;
 }
 
 .icon-bar .icon {
@@ -491,21 +459,6 @@ body {
   position: relative;
 }
 
-/* Close Button */
-.close-btn {
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  font-size: 28px;
-  color: #999;
-  cursor: pointer;
-  transition: color 0.3s;
-}
-
-.close-btn:hover {
-  color: #333;
-}
-
 /* Product Title */
 .modal-content h2 {
   font-size: 24px;
@@ -644,6 +597,7 @@ body {
 
 .search-bar {
   display: flex;
+  white-space: nowrap;
   gap: 5px;
   background: #f5f5f5;
   border-radius: 8px;
@@ -871,10 +825,6 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .search-container {
-    max-width: 100%;
-  }
-
   .search-bar {
     flex-wrap: wrap;
   }
