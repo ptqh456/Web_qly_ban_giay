@@ -1,10 +1,12 @@
 window.onload = function () {
-  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  const userMenuIcon = document.querySelector(".icon.user-menu");
   createAccount();
   createProduct();
   createOrders();
   createImports();
+
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  const userMenuIcon = document.querySelector(".icon.user-menu");
+
   if (!currentUser) {
     userMenuIcon.classList.add("disabled");
   } else {
@@ -19,6 +21,10 @@ window.onload = function () {
   if (cartIcon) {
     cartIcon.addEventListener("click", openCart);
   }
+
+  const products = getFilteredProducts();
+  displayList(products, perPage, currentPage);
+  setupPagination(products, perPage);
 };
 
 function showToast(message, icon = "info") {
@@ -28,6 +34,12 @@ function showToast(message, icon = "info") {
     showConfirmButton: false,
     timer: 2000,
     timerProgressBar: true,
+    didOpen: (toast) => {
+      const container = toast.parentElement;
+      if (container) {
+        container.style.zIndex = "99999";
+      }
+    },
   });
 
   Toast.fire({
@@ -174,6 +186,8 @@ function showUsername(name) {
   const usernameDisplay = document.getElementById("usernameDisplay");
   if (usernameDisplay) {
     usernameDisplay.textContent = name;
+    const displayName = name.length > 10 ? name.substring(0, 10) + "..." : name;
+    usernameDisplay.textContent = displayName;
   }
 }
 
@@ -406,6 +420,10 @@ function showProductArr(productShow, startIndex = 0) {
   container.innerHTML = "";
 
   productShow.forEach((p, i) => {
+    if (p.isHidden) {
+      return;
+    }
+
     const card = document.createElement("div");
     card.className = "product-card";
 
@@ -426,7 +444,9 @@ function showProductArr(productShow, startIndex = 0) {
 }
 
 function getFilteredProducts() {
-  return JSON.parse(localStorage.getItem("products")) || [];
+  const products = JSON.parse(localStorage.getItem("products")) || [];
+  // Chỉ trả về sản phẩm không bị ẩn
+  return products.filter((p) => !p.isHidden);
 }
 
 function displayList(productAll, perPage, currentPage) {
@@ -507,9 +527,6 @@ document.addEventListener("DOMContentLoaded", () => {
     prevBtn.addEventListener("click", () => {
       if (currentPage > 1) {
         currentPage--;
-        const list = getFilteredProducts();
-        displayList(list, perPage, currentPage);
-        setupPagination(list, perPage);
       }
     });
   }
@@ -518,9 +535,6 @@ document.addEventListener("DOMContentLoaded", () => {
     nextBtn.addEventListener("click", () => {
       if (currentPage < totalPage) {
         currentPage++;
-        const list = getFilteredProducts();
-        displayList(list, perPage, currentPage);
-        setupPagination(list, perPage);
       }
     });
   }

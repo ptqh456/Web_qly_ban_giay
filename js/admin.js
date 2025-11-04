@@ -12,6 +12,14 @@ window.onload = function () {
   initInventory();
 };
 
+// === KIỂM TRA ADMIN ĐÃ ĐĂNG NHẬP CHƯA ===
+const isAdmin = localStorage.getItem("isAdminLoggedIn");
+if (isAdmin === "true") {
+  document.getElementById("loginForm").style.display = "none";
+} else {
+  document.getElementById("loginForm").style.display = "flex";
+}
+
 // === ĐĂNG NHẬP ADMIN ===
 document
   .getElementById("adminLoginForm")

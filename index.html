@@ -112,10 +112,10 @@
     <section class="banner">
       <div class="slides">
         <div class="slide active">
-          <img src="./accset/img/banner1.png" alt="Ưu đãi 1" />
+          <img src="./accset/img/banner4.png" alt="Ưu đãi 1" />
         </div>
         <div class="slide">
-          <img src="./accset/img/banner2.png" alt="Ưu đãi 2" />
+          <img src="./accset/img/banner3.png" alt="Ưu đãi 2" />
         </div>
         <div class="slide">
           <img src="./accset/img/banner1.png" alt="Ưu đãi 3" />
@@ -233,9 +233,9 @@
       <h2>Thanh toán đơn hàng</h2>
 
       <div id="newAddressFields" style="display: none; margin-top: 10px;">
-        <input type="text" id="newName" placeholder="Họ tên người nhận">
-        <input type="text" id="newPhone" placeholder="Số điện thoại">
-        <input type="text" id="newAddress" placeholder="Địa chỉ nhận hàng">
+        <input type="text" id="newName" placeholder="Họ tên người nhận" required>
+        <input type="text" id="newPhone" placeholder="Số điện thoại" required>
+        <input type="text" id="newAddress" placeholder="Địa chỉ nhận hàng" required>
       </div>
 
 
@@ -293,7 +293,7 @@
   <div class="dangNhap" id="registerForm" style="display: none">
     <div class="loginbox">
       <h2>Đăng ký</h2>
-      <form action="/admin/xlDangKy.php" method="POST">
+      <form action="" method="POST">
         <span class="close-btn" onclick="closeForm()">×</span>
         <input type="text" id="reg_username" name="username" placeholder="Nhập tài khoản" required />
 
