@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./accset/css/reset.css" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
+  <link rel="stylesheet" href="./accset/css/main.css" />
+  <script defer src="./js/main.js"></script>
+  <link rel="icon" type="image/png" sizes="32x32" href="./accset/img/favicon.png" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <title>Sneaker Zone - Trang chủ</title>
+</head>
+
+<body>
+  <div class="wrapper">
+    <div class="top-bar">
+      Giao hàng miễn phí cho đơn từ 500.000đ
+    </div>
+
+    <header class="header">
+      <div class="logo">
+        <a href="index.html">
+          <img src="./accset/img/favicon.png" alt="Logo Sneaker Zone" />
+        </a>
+      </div>
+
+      <div class="search-container">
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm..." />
+          <button type="button" onclick="searchProducts()"><i class="bx bx-search"></i></button>
+          <button type="button" class="advanced-search-btn" onclick="toggleAdvancedSearch()" title="Tìm kiếm nâng cao">
+            <i class="bx bx-filter"></i>
+          </button>
+        </div>
+
+        <!-- Panel Tìm kiếm nâng cao -->
+        <div class="advanced-search" id="advancedSearch">
+          <div class="advanced-search-content">
+            <h4>Tìm kiếm nâng cao</h4>
+
+            <div class="search-field">
+              <label>Tên sản phẩm:</label>
+              <input type="text" id="advSearchName" placeholder="Nhập tên sản phẩm..." />
+            </div>
+
+            <div class="search-field">
+              <label>Phân loại:</label>
+              <select id="advSearchCategory">
+                <option value="all">Tất cả</option>
+                <option value="thể thao">Giày Thể Thao</option>
+                <option value="cao gót">Giày Cao Gót</option>
+                <option value="dép">Giày Dép</option>
+                <option value="tây">Giày Tây</option>
+                <option value="sandal">Giày Sandal</option>
+              </select>
+            </div>
+
+            <div class="search-field">
+              <label>Khoảng giá:</label>
+              <div class="price-range">
+                <input type="number" id="minPrice" placeholder="Từ" min="0" />
+                <span>-</span>
+                <input type="number" id="maxPrice" placeholder="Đến" min="0" />
+              </div>
+            </div>
+
+            <div class="search-actions">
+              <button class="btn-search" onclick="advancedSearch()">
+                <i class="bx bx-search"></i> Tìm kiếm
+              </button>
+              <button class="btn-reset" onclick="resetSearch()">
+                <i class="bx bx-reset"></i> Đặt lại
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="icon-bar">
+        <div class="icon user-menu">
+          <i class="bx bxs-user" onclick="openLogin()"></i>
+          <span id="usernameDisplay"></span>
+          <ul id="userMenu">
+            <li onclick="viewUserInfo()">Tài Khoản</li>
+            <li onclick="logout()">Đăng Xuất</li>
+          </ul>
+        </div>
+
+        <div class="icon menu">
+          <i class="bx bx-menu"></i>
+          <ul class="category-menu">
+            <li data-category="all" onclick="filterByCategory('all')">Tất Cả</li>
+            <li data-category="thể thao" onclick="filterByCategory('thể thao')">Giày Thể Thao</li>
+            <li data-category="cao gót" onclick="filterByCategory('cao gót')">Giày Cao Gót</li>
+            <li data-category="dép" onclick="filterByCategory('dép')">Giày Dép</li>
+            <li data-category="tây" onclick="filterByCategory('tây')">Giày Tây</li>
+            <li data-category="sandal" onclick="filterByCategory('sandal')">Giày Sandal</li>
+          </ul>
+        </div>
+
+        <div class="icon cart-icon-wrapper">
+          <i class="bx bxs-cart-alt" id="cartIcon"></i>
+          <span class="cart-count" id="cartCount">0</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="banner">
+      <div class="slides">
+        <div class="slide active">
+          <img src="./accset/img/banner1.png" alt="Ưu đãi 1" />
+        </div>
+        <div class="slide">
+          <img src="./accset/img/banner2.png" alt="Ưu đãi 2" />
+        </div>
+        <div class="slide">
+          <img src="./accset/img/banner1.png" alt="Ưu đãi 3" />
+        </div>
+      </div>
+
+      <i class="bx bxs-chevron-left" onclick="prevSlide()"></i>
+      <i class="bx bxs-chevron-right" onclick="nextSlide()"></i>
+    </section>
+
+    <!-- Kết quả tìm kiếm -->
+    <section class="search-results-section" id="searchResultsSection" style="display: none;">
+      <div class="container">
+        <div class="search-results-header">
+          <h3 id="searchResultsTitle">Kết quả tìm kiếm</h3>
+          <button class="btn-clear-search" onclick="clearSearch()">
+            <i class="bx bx-x"></i> Xóa tìm kiếm
+          </button>
+        </div>
+        <p id="searchResultsCount" class="search-count"></p>
+      </div>
+    </section>
+
+    <!-- DANH MỤC SẢN PHẨM -->
+    <section class="product-section">
+      <h2 class="section-title">DANH MỤC SẢN PHẨM</h2>
+
+      <div id="productContainer" class="product-grid">
+        <!-- Sản phẩm hiển thị ở đây -->
+      </div>
+
+      <!-- Thanh phân trang -->
+      <div class="pagination">
+        <button class="prev-page">❮</button>
+        <!-- Các nút số trang sẽ được JS tạo tự động -->
+        <button class="next-page">❯</button>
+      </div>
+    </section>
+
+    <div id="productDetail" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeDetail()">&times;</span>
+        <h2 id="detailName">Tên sản phẩm</h2>
+        <img id="detailImg" src="" alt="Ảnh sản phẩm" />
+        <p id="detailDesc">Mô tả sản phẩm</p>
+        <p><strong>Giá bán:</strong> <span id="detailPrice"></span> Đ</p>
+        <p><strong>Số lượng:</strong> <span id="detailQuantity"></span></p>
+        <p><strong>Danh mục:</strong> <span id="detailCategory"></span></p>
+
+        <div class="size-selection">
+          <label>Chọn kích thước:</label>
+          <div class="size-options">
+            <div class="size-option">
+              <input type="radio" id="size-s" name="size" value="S" checked>
+              <label for="size-s">S</label>
+            </div>
+            <div class="size-option">
+              <input type="radio" id="size-m" name="size" value="M">
+              <label for="size-m">M</label>
+            </div>
+            <div class="size-option">
+              <input type="radio" id="size-l" name="size" value="L">
+              <label for="size-l">L</label>
+            </div>
+            <div class="size-option">
+              <input type="radio" id="size-xl" name="size" value="XL">
+              <label for="size-xl">XL</label>
+            </div>
+          </div>
+        </div>
+
+        <button class="add-to-cart-btn" onclick="addToCart()">
+          <span class="cart-icon">🛒</span>
+          Thêm vào giỏ hàng
+        </button>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>© 2025 Sneaker Zone. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <!-- Giỏ hàng -->
+  <div id="cartModal" class="modal" style="display: none;">
+    <div class="cart-modal-content">
+      <div class="cart-header">
+        <h2><i class="bx bxs-cart"></i> Giỏ hàng của bạn</h2>
+        <span class="close-btn" onclick="closeCart()">&times;</span>
+      </div>
+
+      <div class="cart-body" id="cartBody">
+        <!-- Sản phẩm trong giỏ hàng sẽ hiển thị ở đây -->
+      </div>
+
+      <div class="cart-footer">
+        <div class="cart-total">
+          <span>Tổng cộng:</span>
+          <span class="total-price" id="totalPrice">0 đ</span>
+        </div>
+        <div class="cart-actions">
+          <button class="btn-continue" onclick="closeCart()">
+            <i class="bx bx-arrow-back"></i> Tiếp tục mua hàng
+          </button>
+          <button class="btn-checkout" onclick="openCheckoutModal()">
+            <i class="bx bx-credit-card"></i> Thanh toán
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Thanh Toán -->
+  <div id="checkoutModal" class="modal" style="display: none;">
+    <div class="checkout-modal-content">
+      <h2>Thanh toán đơn hàng</h2>
+
+      <div id="newAddressFields" style="display: none; margin-top: 10px;">
+        <input type="text" id="newName" placeholder="Họ tên người nhận">
+        <input type="text" id="newPhone" placeholder="Số điện thoại">
+        <input type="text" id="newAddress" placeholder="Địa chỉ nhận hàng">
+      </div>
+
+
+      <!-- Chọn phương thức thanh toán -->
+      <div class="checkout-section">
+        <h3>Phương thức thanh toán</h3>
+        <label>
+          <input type="radio" name="paymentMethod" value="cod" checked>
+          Tiền mặt khi nhận hàng
+        </label>
+        <label>
+          <input type="radio" name="paymentMethod" value="bank">
+          Chuyển khoản
+        </label>
+        <label>
+          <input type="radio" name="paymentMethod" value="online">
+          Thanh toán trực tuyến
+        </label>
+      </div>
+
+      <button class="btn-confirm" onclick="checkout()">Xác nhận thanh toán</button>
+      <button class="btn-cancel" onclick="closeCheckoutModal()">Hủy</button>
+    </div>
+  </div>
+  </div>
+
+
+  <!-- Form Đăng nhập -->
+  <div class="dangNhap" id="loginForm" style="display: none">
+    <div class="loginbox">
+      <h2>Đăng Nhập</h2>
+      <form id="loginForm_json" method="post">
+        <span class="close-btn" onclick="closeForm()">×</span>
+
+        <p id="error" style="color: red; display: none">
+          <i class="bx bx-x" style="border-radius: 50%; background-color: #ffaaaa"></i>
+          Đăng nhập KHÔNG thành công. Bạn vui lòng thử lại hoặc đăng nhập bằng
+          cách khác nhé!
+        </p>
+
+        <input type="text" name="username" id="login_username" placeholder="Nhập tên đăng nhập" required />
+
+        <input type="password" name="password" id="login_password" placeholder="Nhập mật khẩu" required />
+
+        <button type="submit" class="btn_submit">Đăng Nhập</button>
+        <div class="sigup-link">
+          Chưa có tài khoản?
+          <a href="#" onclick="openRegister()">Đăng ký</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Form Đăng ký -->
+  <div class="dangNhap" id="registerForm" style="display: none">
+    <div class="loginbox">
+      <h2>Đăng ký</h2>
+      <form action="/admin/xlDangKy.php" method="POST">
+        <span class="close-btn" onclick="closeForm()">×</span>
+        <input type="text" id="reg_username" name="username" placeholder="Nhập tài khoản" required />
+
+        <input type="password" id="reg_password" name="password" placeholder="Nhập mật khẩu" required />
+
+        <input type="password" id="repass" name="repassword" placeholder="Nhập lại mật khẩu" required />
+
+        <input type="text" id="fullname" name="fullname" placeholder="Nhập Họ Tên" required />
+
+        <input type="email" name="email" id="email" placeholder="Nhập Email" required />
+
+        <input type="number" id="phone" name="phone" placeholder="Nhập Số Điện Thoại" required />
+
+        <input type="date" id="birth" name="birth" />
+
+        <button type="submit" class="btn_submit">Đăng Ký</button>
+        <div class="sigup-link">
+          Đã có tài khoản?
+          <a href="#" onclick="openLogin()">Đăng nhập</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="taiKhoan" style="display: none">
+    <div class="infoBox" id="infoBox">
+      <span class="close-btn" onclick="closeUserInfo()">×</span>
+      <h2>Thông Tin Tài Khoản</h2>
+
+      <div class="info-item">
+        <label>Tên đăng nhập:</label>
+        <span></span>
+      </div>
+
+      <div class="info-item">
+        <label>Email:</label>
+        <input type="email" id="infoEmail" required />
+      </div>
+
+      <div class="info-item">
+        <label>Số điện thoại:</label>
+        <input type="tel" id="infoPhone" required />
+      </div>
+
+      <div class="info-item">
+        <label>Địa chỉ:</label>
+        <input type="text" id="infoAddress" required />
+      </div>
+
+      <button id="saveBtn" onclick="saveInfo()">Lưu</button>
+
+      <!-- Thêm phần đơn đặt hàng -->
+      <h2 style="margin-top: 30px;">Đơn Đặt Hàng</h2>
+      <div id="orderHistory">
+        <!-- JS sẽ render danh sách đơn hàng ở đây -->
+        <p>Chưa có đơn hàng nào.</p>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+
+</html>
