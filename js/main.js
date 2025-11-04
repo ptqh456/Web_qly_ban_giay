@@ -1,7 +1,10 @@
 window.onload = function () {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   const userMenuIcon = document.querySelector(".icon.user-menu");
-
+  createAccount();
+  createProduct();
+  createOrders();
+  createImports();
   if (!currentUser) {
     userMenuIcon.classList.add("disabled");
   } else {
