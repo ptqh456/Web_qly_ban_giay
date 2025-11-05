@@ -10,6 +10,12 @@ window.onload = function () {
   showOrderList();
   showImportList();
   initInventory();
+  products.forEach((product) => {
+    if (product.img.startsWith("upload_") && !uploadedImages[product.img]) {
+      // Không thể khôi phục blob URL, hiển thị placeholder
+      uploadedImages[product.img] = "./accset/img/placeholer.png";
+    }
+  });
 };
 
 // === KIỂM TRA ADMIN ĐÃ ĐĂNG NHẬP CHƯA ===
@@ -207,7 +213,6 @@ function displayList(productAll, perPage, currentPage) {
   let productShow = productAll.slice(start, end);
   showProductArr(productShow, start);
 }
-
 function showProductArr(products, startIndex = 0) {
   productListEl.innerHTML = "";
 
@@ -225,12 +230,20 @@ function showProductArr(products, startIndex = 0) {
   document.querySelector(".pagination").style.display = "flex";
 
   products.forEach((item, index) => {
-    const actualIndex = startIndex + index; // Index thực trong mảng gốc
+    const actualIndex = startIndex + index;
+
+    // ✅ KIỂM TRA: Nếu bắt đầu bằng "upload_" thì dùng blob URL
+    let imgSrc;
+    if (item.img.startsWith("upload_")) {
+      imgSrc = uploadedImages[item.img] || "./accset/img/placeholer.png";
+    } else {
+      imgSrc = `./accset/img/${item.img}`;
+    }
 
     productListEl.innerHTML += `
       <div class="product-item">
         <div class="product-left">
-          <img src="./accset/img/${item.img}" 
+          <img src="${imgSrc}" 
                alt="${item.name}"
                onerror="this.src='./accset/img/placeholer.png'">
           <div class="product-info">
@@ -1035,15 +1048,19 @@ function toggleHide(index) {
 }
 
 // ================== CHỌN ẢNH & PREVIEW ==================
+const uploadedImages = {};
 productFileInput.addEventListener("change", function (e) {
   const file = e.target.files[0];
   if (file && file.type.startsWith("image/")) {
-    const reader = new FileReader();
-    reader.onload = function (event) {
-      previewImage.src = event.target.result;
-      currentFileName = file.name;
-    };
-    reader.readAsDataURL(file);
+    // Tạo blob URL
+    const blobUrl = URL.createObjectURL(file);
+    previewImage.src = blobUrl;
+
+    // ✅ Đánh dấu là ảnh upload bằng prefix
+    currentFileName = `upload_${Date.now()}_${file.name}`;
+
+    // Lưu blob URL vào memory
+    uploadedImages[currentFileName] = blobUrl;
   } else {
     alert("Vui lòng chọn file ảnh!");
     productFileInput.value = "";
@@ -1110,7 +1127,7 @@ productForm.addEventListener("submit", (e) => {
     importPrice: importPrice,
     profitPercent: parseFloat(profitPercentCalc.toFixed(2)),
     desc: document.getElementById("productDesc").value.trim(),
-    img: currentFileName || "placeholer.png",
+    img: currentFileName || "placeholer.png", // ✅ Chỉ lưu tên file
     isHidden: isEdit ? products[indexCur].isHidden : false,
   };
 
@@ -1118,8 +1135,6 @@ productForm.addEventListener("submit", (e) => {
     products[indexCur] = productData;
   } else {
     products.push(productData);
-    // Chuyển đến trang cuối khi thêm mới
-    const filtered = getFilteredProducts();
     currentPage = Math.ceil(products.length / perPage);
   }
 
@@ -1141,6 +1156,7 @@ function editProduct(index) {
   document.getElementById("productType").value = product.category;
   document.getElementById("productPrice").value = product.price;
   document.getElementById("productImportPrice").value = product.importPrice;
+
   const profitPercent =
     product.profitPercent !== undefined
       ? product.profitPercent
@@ -1148,10 +1164,16 @@ function editProduct(index) {
 
   document.getElementById("productProfitPercent").value =
     profitPercent.toFixed(2);
-
   document.getElementById("productDesc").value = product.desc;
 
-  previewImage.src = `./accset/img/${product.img}`;
+  // ✅ Kiểm tra loại ảnh
+  if (product.img.startsWith("upload_")) {
+    previewImage.src =
+      uploadedImages[product.img] || "./accset/img/placeholer.png";
+  } else {
+    previewImage.src = `./accset/img/${product.img}`;
+  }
+
   currentFileName = product.img;
 
   productModal.style.display = "flex";
