@@ -83,6 +83,8 @@ function prevSlide() {
   showSlide(slideIndex - 1);
 }
 
+setInterval(nextSlide, 3000);
+
 const registerForm = document.querySelector("#registerForm form");
 if (registerForm) {
   registerForm.addEventListener("submit", function (e) {
