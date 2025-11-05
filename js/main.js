@@ -95,24 +95,75 @@ if (registerForm) {
     const phone = document.getElementById("phone").value.trim();
     const address = "";
 
+    // 1. Kiểm tra các trường bắt buộc
+    if (!username) {
+      showToast("Vui lòng nhập tên đăng nhập!", "warning");
+      document.getElementById("reg_username").focus();
+      return;
+    }
+
+    if (!password) {
+      showToast("Vui lòng nhập mật khẩu!", "warning");
+      document.getElementById("reg_password").focus();
+      return;
+    }
+
+    if (!repass) {
+      showToast("Vui lòng nhập lại mật khẩu!", "warning");
+      document.getElementById("repass").focus();
+      return;
+    }
+
+    if (!email) {
+      showToast("Vui lòng nhập email!", "warning");
+      document.getElementById("email").focus();
+      return;
+    }
+
+    if (!phone) {
+      showToast("Vui lòng nhập số điện thoại!", "warning");
+      document.getElementById("phone").focus();
+      return;
+    }
+
     if (password !== repass) {
+      showToast("Mật khẩu nhập lại không khớp!", "error");
       const repassInput = document.getElementById("repass");
       repassInput.value = "";
-      repassInput.placeholder = "Mật khẩu nhập lại không khớp!";
-      repassInput.style.border = "2px solid red";
-      repassInput.style.color = "red";
+      repassInput.focus();
+      return;
+    }
+
+    const phoneRegex = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      showToast(
+        "Số điện thoại không hợp lệ! (VD: 0912345678 hoặc +84912345678)",
+        "warning"
+      );
+      document.getElementById("phone").focus();
       return;
     }
 
     let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
 
-    let exists = accounts.some((acc) => acc.username === username);
-    if (exists) {
-      const userNameInput = document.getElementById("reg_username");
-      userNameInput.style.color = "red";
-      userNameInput.style.border = "2px solid red";
-      userNameInput.placeholder = "Tài khoản đã tồn tại!";
-      userNameInput.value = "";
+    let existsUsername = accounts.some((acc) => acc.username === username);
+    if (existsUsername) {
+      showToast("Tên đăng nhập đã tồn tại!", "error");
+      document.getElementById("reg_username").focus();
+      return;
+    }
+
+    let existsEmail = accounts.some((acc) => acc.email === email);
+    if (existsEmail) {
+      showToast("Email đã được sử dụng!", "error");
+      document.getElementById("email").focus();
+      return;
+    }
+
+    let existsPhone = accounts.some((acc) => acc.phone === phone);
+    if (existsPhone) {
+      showToast("Số điện thoại đã được sử dụng!", "error");
+      document.getElementById("phone").focus();
       return;
     }
 
