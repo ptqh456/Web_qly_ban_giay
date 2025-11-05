@@ -1084,6 +1084,46 @@ function checkout() {
   const address =
     document.getElementById("newAddress").value || currentUser.address;
 
+  if (!name) {
+    showToast("Vui lòng nhập tên người nhận!", "warning");
+    document.getElementById("newName").focus();
+    return;
+  }
+
+  if (name.length < 2) {
+    showToast("Tên người nhận phải có ít nhất 2 ký tự!", "warning");
+    document.getElementById("newName").focus();
+    return;
+  }
+
+  if (!phone) {
+    showToast("Vui lòng nhập số điện thoại!", "warning");
+    document.getElementById("newPhone").focus();
+    return;
+  }
+
+  const phoneRegex = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
+  if (!phoneRegex.test(phone)) {
+    showToast(
+      "Số điện thoại không hợp lệ! (VD: 0912345678 hoặc +84912345678)",
+      "warning"
+    );
+    document.getElementById("newPhone").focus();
+    return;
+  }
+
+  if (!address) {
+    showToast("Vui lòng nhập địa chỉ giao hàng!", "warning");
+    document.getElementById("newAddress").focus();
+    return;
+  }
+
+  if (address.length < 10) {
+    showToast("Địa chỉ giao hàng phải có ít nhất 10 ký tự!", "warning");
+    document.getElementById("newAddress").focus();
+    return;
+  }
+
   // Lấy phương thức thanh toán
   const paymentMethod =
     document.querySelector('input[name="paymentMethod"]:checked')?.value ||
