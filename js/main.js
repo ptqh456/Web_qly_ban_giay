@@ -95,7 +95,7 @@ if (registerForm) {
     const repass = document.getElementById("repass").value.trim();
     const email = document.getElementById("email").value.trim();
     const phone = document.getElementById("phone").value.trim();
-    const address = "";
+    const address = document.getElementById("address").value.trim();
 
     // 1. Kiểm tra các trường bắt buộc
     if (!username) {
@@ -143,6 +143,12 @@ if (registerForm) {
         "warning"
       );
       document.getElementById("phone").focus();
+      return;
+    }
+
+    if (!address) {
+      showToast("Vui lòng nhập address!", "warning");
+      document.getElementById("address").focus();
       return;
     }
 
