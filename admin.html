@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="./accset/css/reset.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
   <link rel="stylesheet" href="./accset/css/admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script defer src="./js/toast.js"></script>
   <script defer src="./database/dataProducts.js"></script>
   <script defer src="./js/admin.js"></script>
   <link rel="icon" type="image/png" sizes="32x32" href="./accset/img/favicon.png" />
@@ -77,17 +79,21 @@
                 <input type="text" id="minProfit" placeholder="% Lợi nhuận từ">
                 <input type="text" id="maxProfit" placeholder="% Lợi nhuận đến">
               </div>
+              <div class="search-price">
+                <input type="number" id="minPrice" placeholder="Giá bán từ">
+                <input type="number" id="maxPrice" placeholder="Giá bán đến">
+              </div>
             </div>
           </div>
 
           <div class=" top-content">
             <select name="the-loai" id="the-loai">
               <option value="all">Tất Cả</option>
-              <option value="thể thao">Giày Thể Thao</option>
-              <option value="cao gót">Giày Cao Gót</option>
-              <option value="dép">Giày Dép</option>
-              <option value="tây"">Giày Tây</option>
-                <option value=" sandal"">Giày Sandal</option>
+              <option value="Thể thao">Giày Thể Thao</option>
+              <option value="Cao gót">Giày Cao Gót</option>
+              <option value="Dép">Giày Dép</option>
+              <option value="Tây"">Giày Tây</option>
+                <option value=" Sandal"">Giày Sandal</option>
             </select>
             <button class="btn-reset-order">
               <i class="fa-solid fa-rotate-right"></i> Làm Mới
@@ -112,7 +118,6 @@
 
         <div id="productModal" class="modal">
           <div class="modal-content">
-
             <div class="image-upload-wrapper">
               <img id="previewImage" src="./accset/img/placeholer.png" alt="Preview">
               <label for="productFile" class="upload-btn">
@@ -128,17 +133,17 @@
 
                 <label>Loại sản phẩm:</label>
                 <select id="productType">
-                  <option value="thể thao">Giày Thể Thao</option>
-                  <option value="cao gót">Giày Cao Gót</option>
-                  <option value="dép">Giày Dép</option>
-                  <option value="tây">Giày Tây</option>
-                  <option value="sandal">Giày Sandal</option>
+                  <option value="Thể thao">Giày Thể Thao</option>
+                  <option value="Cao gót">Giày Cao Gót</option>
+                  <option value="Dép">Giày Dép</option>
+                  <option value="Tây">Giày Tây</option>
+                  <option value="Sandal">Giày Sandal</option>
                 </select>
 
                 <label>Giá:</label>
-                <input type="number" id="productPrice" required>
+                <input type="number" id="productPrice" required min="0">
                 <label>Giá vốn:</label>
-                <input type="number" id="productImportPrice" required>
+                <input type="number" id="productImportPrice" required min="0">
 
                 <label>% Lợi nhuận:</label>
                 <input type="text" id="productProfitPercent" required>
