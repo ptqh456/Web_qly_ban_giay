@@ -28,4 +28,8 @@ Admin: https://ptqh456.github.io/Web_qly_ban_giay/admin
 
 # tác giả
 
-Tên: Phạm Trần Quang Huy / 3124410120
+Tên: Phạm Trần Quang Huy ; MSSV: 3124410120;
+Tên: Trần Quang Hữu ; MSSV: 3124410134;
+Tên: Trần Diệu Vĩ ; MSSV: 3124410402;
+Tên: Phạm Hoàng Lộc ; MSSV: 3124410200;
+Tên: Đoàn Đức Lộc ; MSSV: 3124410196;
