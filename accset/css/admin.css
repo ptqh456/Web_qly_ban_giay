@@ -606,6 +606,16 @@ td {
   border-bottom: 1px solid #ddd;
 }
 
+#inventoryTable tbody tr:hover,
+#userTable tbody tr:hover,
+#importProducts tbody tr:hover,
+#importTable tbody tr:hover,
+#orderProducts tbody tr:hover,
+#orderTable tbody tr:hover {
+  background-color: #f5f9ff;
+  transition: 0.2s;
+}
+
 .table-container {
   width: 100%;
   overflow-x: auto; /* Cho phép cuộn ngang khi bảng quá rộng */
@@ -618,11 +628,6 @@ td {
   border-collapse: collapse;
   text-align: center;
   font-size: 15px;
-}
-
-#orderTable tbody tr:hover {
-  background-color: #f5f9ff;
-  transition: 0.2s;
 }
 
 .status {
@@ -702,12 +707,13 @@ td {
   transition: 0.2s;
 }
 
-.btn-add-sp,
+#btn-add-sp,
 .add-btn,
 .save-btn {
   background-color: #4caf50;
   color: white;
 }
+.delete-btn,
 .cancel-btn {
   background-color: #f04d41;
   color: white;
@@ -771,6 +777,12 @@ td {
 
 .inventory-content.active {
   display: block;
+}
+
+.filter-section {
+  display: flex;
+  gap: 20px;
+  margin: 10px;
 }
 
 .filter-group select,

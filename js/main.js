@@ -806,11 +806,15 @@ function resetSearch() {
 document.addEventListener("DOMContentLoaded", function () {
   const searchInput = document.getElementById("searchInput");
   if (searchInput) {
-    searchInput.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        searchProducts();
+    searchInput.addEventListener("input", function () {
+      const keyword = this.value.trim();
+      if (keyword === "") {
+        const products = getFilteredProducts();
+        displayList(products, perPage, currentPage);
+        setupPagination(products, perPage);
+        return;
       }
+      searchProducts();
     });
   }
 

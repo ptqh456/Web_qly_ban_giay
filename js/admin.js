@@ -501,16 +501,7 @@ function deleteImport(importId) {
   const imports = JSON.parse(localStorage.getItem("imports")) || [];
   const imp = imports.find((i) => i.id == importId);
 
-  // Fix: Cảnh báo khi xóa phiếu đã hoàn thành
-  if (imp && imp.status === "completed") {
-    if (
-      !confirm(
-        "⚠️ CẢNH BÁO: Phiếu này đã hoàn thành và đã cập nhật vào kho!\nViệc xóa sẽ KHÔNG hoàn trả số lượng về kho.\n\nBạn có chắc muốn xóa?"
-      )
-    ) {
-      return;
-    }
-  } else if (!confirm("Bạn có chắc muốn xóa phiếu nhập này?")) {
+  if (!confirm("Bạn có chắc muốn xóa phiếu nhập này?")) {
     return;
   }
 
@@ -530,7 +521,12 @@ function completeImport(importId) {
     return;
   }
 
-  // Cập nhật số lượng sản phẩm trong kho
+  // FIX: Kiểm tra phiếu nhập có sản phẩm không
+  if (!imp.items || imp.items.length === 0) {
+    showToast("Phiếu nhập không có sản phẩm nào!", "error");
+    return;
+  }
+
   const products = JSON.parse(localStorage.getItem("products")) || [];
   let hasError = false;
   let errorMessages = [];
@@ -540,19 +536,16 @@ function completeImport(importId) {
     if (product) {
       product.quantity = (product.quantity || 0) + item.quantity;
     } else {
-      // Fix: Thông báo lỗi khi sản phẩm không tồn tại
       hasError = true;
       errorMessages.push(
-        `- Sản phẩm "${item.name}" (ID: ${item.productId}) không tồn tại trong kho`
+        `Sản phẩm "${item.name}" (ID: ${item.productId}) không tồn tại`
       );
     }
   });
 
   if (hasError) {
     showToast(
-      "LỖI: " +
-        errorMessages.join(", ") +
-        ". Vui lòng kiểm tra lại danh sách sản phẩm!",
+      "LỖI: " + errorMessages.join(", ") + ". Vui lòng kiểm tra lại!",
       "error"
     );
     return;
@@ -566,17 +559,19 @@ function completeImport(importId) {
   showImportList();
 }
 
-// ============= PHẦN 4: Thêm phiếu nhập mới =============
+// ============= PHẦN 4: Thêm/Xem phiếu nhập =============
 let isAdd = false;
-let selectedProducts = []; // Lưu danh sách sản phẩm được chọn khi thêm mới
+let selectedProducts = [];
+let currentImportId = null; // FIX: Lưu ID phiếu đang chỉnh sửa
 
 function showImportDetail(importId) {
   const imports = JSON.parse(localStorage.getItem("imports")) || [];
 
-  // Nếu không truyền importId => Chế độ THÊM MỚI
+  // Chế độ THÊM MỚI
   if (!importId) {
     isAdd = true;
     selectedProducts = [];
+    currentImportId = null;
 
     document.getElementById("importId").textContent = "Mới";
     document.getElementById("importDate").value = new Date()
@@ -589,6 +584,7 @@ function showImportDetail(importId) {
 
     document.getElementById("addImportDetail").style.display = "inline-block";
     document.getElementById("saveImportDetail").style.display = "none";
+    document.getElementById("btn-add-sp").style.display = "inline-block";
 
     setupAddImportHandlers();
     document.getElementById("importDetailModal").style.display = "flex";
@@ -597,82 +593,117 @@ function showImportDetail(importId) {
 
   // Chế độ XEM/SỬA
   isAdd = false;
+  currentImportId = importId;
   const imp = imports.find((i) => i.id == importId);
+
   if (!imp) {
     showToast("Không tìm thấy phiếu nhập!", "error");
     return;
   }
 
   const btnAddSP = document.getElementById("btn-add-sp");
+  const saveBtn = document.getElementById("saveImportDetail");
+  const addBtn = document.getElementById("addImportDetail");
+
+  // FIX: Xử lý hiển thị nút dựa trên trạng thái
   if (imp.status === "completed") {
     btnAddSP.style.display = "none";
+    saveBtn.style.display = "none";
+    document.getElementById("importDate").disabled = true;
+    document.getElementById("importStatus").disabled = true;
   } else {
     btnAddSP.style.display = "inline-block";
+    saveBtn.style.display = "inline-block";
+    document.getElementById("importDate").disabled = false;
+    document.getElementById("importStatus").disabled = false;
   }
 
-  document.getElementById("addImportDetail").style.display = "none";
-  document.getElementById("saveImportDetail").style.display = "inline-block";
+  addBtn.style.display = "none";
 
   document.getElementById("importId").textContent = imp.id;
   document.getElementById("importDate").value = imp.date;
   document.getElementById("importStatus").value = imp.status;
 
-  // Fix: Xử lý total không phải số
   const total = typeof imp.total === "number" ? imp.total : 0;
   document.getElementById("importTotal").textContent =
     total.toLocaleString() + "đ";
 
-  if (imp.status === "completed") {
-    document.getElementById("saveImportDetail").style.display = "none";
-  }
-
   renderImportItems(imp);
   document.getElementById("importDetailModal").style.display = "flex";
 
-  // Lưu chỉnh sửa
-  document.getElementById("saveImportDetail").onclick = function () {
-    // Fix: Validate dữ liệu trước khi lưu
-    if (!validateImportData(imp)) {
-      return;
-    }
-
-    let total = 0;
-    imp.items.forEach((p, index) => {
-      const newPrice =
-        parseFloat(document.getElementById(`price-${index}`).value) || 0;
-      const newQty =
-        parseInt(document.getElementById(`qty-${index}`).value) || 0;
-
-      // Fix: Validate giá trị
-      if (newPrice < 0 || newQty < 1) {
-        showToast("Giá và số lượng phải là số dương!", "error");
-        return;
-      }
-
-      p.importPrice = newPrice;
-      p.quantity = newQty;
-      total += newPrice * newQty;
-    });
-
-    imp.total = total;
-    imp.date = document.getElementById("importDate").value;
-    imp.status = document.getElementById("importStatus").value;
-
-    localStorage.setItem("imports", JSON.stringify(imports));
-    document.getElementById("importDetailModal").style.display = "none";
-    showToast("Cập nhật phiếu nhập thành công!", "success");
-    showImportList();
+  // FIX: Sửa lỗi lưu chỉnh sửa
+  saveBtn.onclick = function () {
+    saveImportChanges(importId);
   };
 
-  document.getElementById("cancelImportDetail").onclick = function () {
-    document.getElementById("importDetailModal").style.display = "none";
+  // FIX: Thêm sự kiện cho nút thêm sản phẩm
+  btnAddSP.onclick = function () {
+    showProductSelectionModal(importId);
   };
 }
 
-// Fix: Tách hàm render để dễ bảo trì
+// FIX: Tách riêng hàm lưu chỉnh sửa
+function saveImportChanges(importId) {
+  const imports = JSON.parse(localStorage.getItem("imports")) || [];
+  const imp = imports.find((i) => i.id == importId);
+
+  if (!imp) {
+    showToast("Không tìm thấy phiếu nhập!", "error");
+    return;
+  }
+
+  if (!validateImportData(imp)) {
+    return;
+  }
+
+  let total = 0;
+  imp.items.forEach((p, index) => {
+    const priceInput = document.getElementById(`price-${index}`);
+    const qtyInput = document.getElementById(`qty-${index}`);
+
+    // FIX: Kiểm tra phần tử tồn tại
+    if (!priceInput || !qtyInput) {
+      showToast("Lỗi: Không tìm thấy input!", "error");
+      return;
+    }
+
+    const newPrice = parseFloat(priceInput.value) || 0;
+    const newQty = parseInt(qtyInput.value) || 0;
+
+    if (newPrice < 0 || newQty < 1) {
+      showToast("Giá và số lượng phải là số dương!", "error");
+      return;
+    }
+
+    p.importPrice = newPrice;
+    p.quantity = newQty;
+    total += newPrice * newQty;
+  });
+
+  imp.total = total;
+  imp.date = document.getElementById("importDate").value;
+  imp.status = document.getElementById("importStatus").value;
+
+  localStorage.setItem("imports", JSON.stringify(imports));
+  document.getElementById("importDetailModal").style.display = "none";
+  showToast("Cập nhật phiếu nhập thành công!", "success");
+  showImportList();
+}
+
+document.getElementById("cancelImportDetail").onclick = function () {
+  document.getElementById("importDetailModal").style.display = "none";
+};
+
 function renderImportItems(imp) {
   const tbody = document.querySelector("#importProducts tbody");
   let html = "";
+
+  // FIX: Kiểm tra mảng items
+  if (!imp.items || imp.items.length === 0) {
+    tbody.innerHTML =
+      "<tr><td colspan='5' style='text-align:center'>Chưa có sản phẩm nào</td></tr>";
+    return;
+  }
 
   imp.items.forEach((p, index) => {
     const deleteBtn =
@@ -680,15 +711,17 @@ function renderImportItems(imp) {
         ? `<button class="delete-btn-small" onclick="removeImportItem(${index})"><i class="fa-solid fa-trash"></i></button>`
         : "";
 
+    const disabled = imp.status === "completed" ? "disabled" : "";
+
     html += `
       <tr>
         <td>${p.name}</td>
         <td><input type="number" id="price-${index}" value="${
       p.importPrice
-    }" min="0" step="1000" ${imp.status === "completed" ? "disabled" : ""}></td>
+    }" min="0" ${disabled}></td>
         <td><input type="number" id="qty-${index}" value="${
       p.quantity
-    }" min="1" ${imp.status === "completed" ? "disabled" : ""}></td>
+    }" min="1" ${disabled}></td>
         <td id="amount-${index}">${(
       p.importPrice * p.quantity
     ).toLocaleString()}đ</td>
@@ -699,20 +732,19 @@ function renderImportItems(imp) {
 
   tbody.innerHTML = html;
 
-  // Chỉ cho phép chỉnh sửa nếu status = in-progress
   if (imp.status === "in-progress") {
     setupItemInputHandlers(imp);
   }
 }
 
-// Fix: Tách hàm xử lý input để dễ đọc
 function setupItemInputHandlers(imp) {
   imp.items.forEach((p, index) => {
     const priceInput = document.getElementById(`price-${index}`);
     const qtyInput = document.getElementById(`qty-${index}`);
 
+    if (!priceInput || !qtyInput) return;
+
     const updateAmountAndTotal = () => {
-      // Fix: Validate input
       let newPrice = parseFloat(priceInput.value);
       let newQty = parseInt(qtyInput.value);
 
@@ -728,18 +760,23 @@ function setupItemInputHandlers(imp) {
 
       const newAmount = newPrice * newQty;
 
-      document.getElementById(`amount-${index}`).textContent =
-        newAmount.toLocaleString() + "đ";
+      const amountEl = document.getElementById(`amount-${index}`);
+      if (amountEl) {
+        amountEl.textContent = newAmount.toLocaleString() + "đ";
+      }
 
       let total = 0;
       imp.items.forEach((_, i) => {
         const price =
-          parseFloat(document.getElementById(`price-${i}`).value) || 0;
-        const qty = parseInt(document.getElementById(`qty-${i}`).value) || 0;
+          parseFloat(document.getElementById(`price-${i}`)?.value) || 0;
+        const qty = parseInt(document.getElementById(`qty-${i}`)?.value) || 0;
         total += price * qty;
       });
-      document.getElementById("importTotal").textContent =
-        total.toLocaleString() + "đ";
+
+      const totalEl = document.getElementById("importTotal");
+      if (totalEl) {
+        totalEl.textContent = total.toLocaleString() + "đ";
+      }
     };
 
     priceInput.addEventListener("input", updateAmountAndTotal);
@@ -747,7 +784,6 @@ function setupItemInputHandlers(imp) {
   });
 }
 
-// Fix: Thêm hàm validate
 function validateImportData(imp) {
   if (!imp.items || imp.items.length === 0) {
     showToast("Phiếu nhập phải có ít nhất 1 sản phẩm!", "error");
@@ -755,8 +791,13 @@ function validateImportData(imp) {
   }
 
   for (let i = 0; i < imp.items.length; i++) {
-    const price = parseFloat(document.getElementById(`price-${i}`).value);
-    const qty = parseInt(document.getElementById(`qty-${i}`).value);
+    const priceInput = document.getElementById(`price-${i}`);
+    const qtyInput = document.getElementById(`qty-${i}`);
+
+    if (!priceInput || !qtyInput) continue;
+
+    const price = parseFloat(priceInput.value);
+    const qty = parseInt(qtyInput.value);
 
     if (isNaN(price) || price < 0) {
       showToast(
@@ -782,41 +823,50 @@ function validateImportData(imp) {
 function removeImportItem(index) {
   if (!confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
 
-  const importId = document.getElementById("importId").textContent;
-  const imports = JSON.parse(localStorage.getItem("imports")) || [];
-  const imp = imports.find((i) => i.id == importId);
+  if (isAdd) {
+    // FIX: Xử lý xóa khi đang thêm mới
+    selectedProducts.splice(index, 1);
+    renderSelectedProducts();
+  } else {
+    // Xử lý xóa khi đang chỉnh sửa
+    const importId = currentImportId;
+    const imports = JSON.parse(localStorage.getItem("imports")) || [];
+    const imp = imports.find((i) => i.id == importId);
 
-  if (imp && imp.status === "in-progress") {
-    imp.items.splice(index, 1);
+    if (imp && imp.status === "in-progress") {
+      imp.items.splice(index, 1);
 
-    // Fix: Tính lại tổng tiền
-    imp.total = imp.items.reduce(
-      (sum, item) => sum + item.importPrice * item.quantity,
-      0
-    );
+      imp.total = imp.items.reduce(
+        (sum, item) => sum + item.importPrice * item.quantity,
+        0
+      );
 
-    localStorage.setItem("imports", JSON.stringify(imports));
+      localStorage.setItem("imports", JSON.stringify(imports));
 
-    // Fix: Cập nhật hiển thị ngay
-    renderImportItems(imp);
-    document.getElementById("importTotal").textContent =
-      imp.total.toLocaleString() + "đ";
+      renderImportItems(imp);
+      document.getElementById("importTotal").textContent =
+        imp.total.toLocaleString() + "đ";
+
+      showToast("Đã xóa sản phẩm!", "success");
+    }
   }
 }
 
 // ============= Thêm sản phẩm vào phiếu nhập =============
 function setupAddImportHandlers() {
-  document.getElementById("btn-add-sp").onclick = function () {
+  const btnAddSP = document.getElementById("btn-add-sp");
+  const addBtn = document.getElementById("addImportDetail");
+
+  btnAddSP.onclick = function () {
     showProductSelectionModal();
   };
 
-  document.getElementById("addImportDetail").onclick = function () {
+  addBtn.onclick = function () {
     if (selectedProducts.length === 0) {
       showToast("Vui lòng thêm ít nhất 1 sản phẩm!", "warning");
       return;
     }
 
-    // Fix: Validate ngày tháng
     const dateInput = document.getElementById("importDate").value;
     if (!dateInput) {
       showToast("Vui lòng chọn ngày nhập!", "error");
@@ -847,13 +897,17 @@ function setupAddImportHandlers() {
   };
 }
 
-// ============= PHẦN 8: Modal chọn sản phẩm  =============
-function showProductSelectionModal() {
-  // Fix: Xóa dòng cũ nếu có
+// ============= Modal chọn sản phẩm =============
+function showProductSelectionModal(importId) {
   const oldRow = document.getElementById("add-product-row");
   if (oldRow) oldRow.remove();
 
   const products = JSON.parse(localStorage.getItem("products")) || [];
+
+  if (products.length === 0) {
+    showToast("Không có sản phẩm nào trong kho!", "warning");
+    return;
+  }
 
   let html = `
     <div style="margin: 10px 0;">
@@ -874,7 +928,9 @@ function showProductSelectionModal() {
       <input type="number" id="inputImportQty" min="1" value="1" placeholder="Nhập số lượng">
     </div>
     <div style="margin-top: 10px;">
-      <button onclick="addProductToImport()" class="add-btn"><i class="fa-solid fa-plus"></i> Thêm vào phiếu</button>
+      <button onclick="addProductToImport(${
+        importId || null
+      })" class="add-btn"><i class="fa-solid fa-plus"></i> Thêm vào phiếu</button>
       <button onclick="closeProductSelectionModal()" class="delete-btn"><i class="fa-solid fa-times"></i> Đóng</button>
     </div>
   `;
@@ -882,25 +938,23 @@ function showProductSelectionModal() {
   const tbody = document.querySelector("#importProducts tbody");
   tbody.innerHTML += `
     <tr id="add-product-row">
-      <td colspan="5">${html}</td>
+      <td colspan="4">${html}</td>
     </tr>
   `;
 }
 
-// Fix: Thêm hàm đóng modal
 function closeProductSelectionModal() {
   const row = document.getElementById("add-product-row");
   if (row) row.remove();
 }
 
-function addProductToImport() {
-  const productId = document.getElementById("selectProduct").value;
+function addProductToImport(importId) {
+  const productId = document.getElementById("selectProduct")?.value;
   const importPrice = parseFloat(
-    document.getElementById("inputImportPrice").value
+    document.getElementById("inputImportPrice")?.value
   );
-  const quantity = parseInt(document.getElementById("inputImportQty").value);
+  const quantity = parseInt(document.getElementById("inputImportQty")?.value);
 
-  // Fix: Validate đầy đủ
   if (!productId) {
     showToast("Vui lòng chọn sản phẩm!", "warning");
     return;
@@ -924,36 +978,76 @@ function addProductToImport() {
     return;
   }
 
-  // Kiểm tra xem sản phẩm đã có trong danh sách chưa
-  const existingIndex = selectedProducts.findIndex(
-    (p) => p.productId == productId
-  );
+  // FIX: Xử lý thêm sản phẩm cho cả 2 trường hợp
+  if (isAdd) {
+    // Thêm vào selectedProducts khi tạo mới
+    const existingIndex = selectedProducts.findIndex(
+      (p) => p.productId == productId
+    );
 
-  if (existingIndex !== -1) {
-    selectedProducts[existingIndex].quantity += quantity;
-    selectedProducts[existingIndex].importPrice = importPrice;
+    if (existingIndex !== -1) {
+      selectedProducts[existingIndex].quantity += quantity;
+      selectedProducts[existingIndex].importPrice = importPrice;
+    } else {
+      selectedProducts.push({
+        productId: product.id,
+        name: product.name,
+        quantity: quantity,
+        importPrice: importPrice,
+      });
+    }
+
+    renderSelectedProducts();
   } else {
-    selectedProducts.push({
-      productId: product.id,
-      name: product.name,
-      quantity: quantity,
-      importPrice: importPrice,
-    });
+    // Thêm vào phiếu đang chỉnh sửa
+    const imports = JSON.parse(localStorage.getItem("imports")) || [];
+    const imp = imports.find((i) => i.id == importId);
+
+    if (!imp) {
+      showToast("Không tìm thấy phiếu nhập!", "error");
+      return;
+    }
+
+    const existingIndex = imp.items.findIndex((p) => p.productId == productId);
+
+    if (existingIndex !== -1) {
+      imp.items[existingIndex].quantity += quantity;
+      imp.items[existingIndex].importPrice = importPrice;
+    } else {
+      imp.items.push({
+        productId: product.id,
+        name: product.name,
+        quantity: quantity,
+        importPrice: importPrice,
+      });
+    }
+
+    imp.total = imp.items.reduce(
+      (sum, item) => sum + item.importPrice * item.quantity,
+      0
+    );
+
+    localStorage.setItem("imports", JSON.stringify(imports));
+
+    renderImportItems(imp);
+    document.getElementById("importTotal").textContent =
+      imp.total.toLocaleString() + "đ";
   }
 
-  // Cập nhật hiển thị
-  renderSelectedProducts();
-
-  // Fix: Đóng modal sau khi thêm
-  const row = document.getElementById("add-product-row");
-  if (row) row.remove();
-
+  closeProductSelectionModal();
   showToast("Đã thêm sản phẩm vào phiếu!", "success");
 }
 
 function renderSelectedProducts() {
   const tbody = document.querySelector("#importProducts tbody");
   let html = "";
+
+  if (selectedProducts.length === 0) {
+    tbody.innerHTML =
+      "<tr><td colspan='5' style='text-align:center'>Chưa có sản phẩm nào</td></tr>";
+    document.getElementById("importTotal").textContent = "0đ";
+    return;
+  }
 
   selectedProducts.forEach((p, index) => {
     html += `
@@ -973,16 +1067,15 @@ function renderSelectedProducts() {
     `;
   });
 
-  // Fix: Gán innerHTML một lần
   tbody.innerHTML = html;
 
-  // Gán sự kiện real-time
   selectedProducts.forEach((p, index) => {
     const priceInput = document.getElementById(`price-${index}`);
     const qtyInput = document.getElementById(`qty-${index}`);
 
+    if (!priceInput || !qtyInput) return;
+
     const updateTotal = () => {
-      // Fix: Validate input
       let newPrice = parseFloat(priceInput.value);
       let newQty = parseInt(qtyInput.value);
 
@@ -999,22 +1092,26 @@ function renderSelectedProducts() {
       selectedProducts[index].importPrice = newPrice;
       selectedProducts[index].quantity = newQty;
 
-      document.getElementById(`amount-${index}`).textContent =
-        (newPrice * newQty).toLocaleString() + "đ";
+      const amountEl = document.getElementById(`amount-${index}`);
+      if (amountEl) {
+        amountEl.textContent = (newPrice * newQty).toLocaleString() + "đ";
+      }
 
       const total = selectedProducts.reduce(
         (sum, item) => sum + item.importPrice * item.quantity,
         0
       );
-      document.getElementById("importTotal").textContent =
-        total.toLocaleString() + "đ";
+
+      const totalEl = document.getElementById("importTotal");
+      if (totalEl) {
+        totalEl.textContent = total.toLocaleString() + "đ";
+      }
     };
 
     priceInput.addEventListener("input", updateTotal);
     qtyInput.addEventListener("input", updateTotal);
   });
 
-  // Cập nhật tổng
   const total = selectedProducts.reduce(
     (sum, item) => sum + item.importPrice * item.quantity,
     0
@@ -1028,11 +1125,15 @@ function removeSelectedProduct(index) {
 
   selectedProducts.splice(index, 1);
   renderSelectedProducts();
+  showToast("Đã xóa sản phẩm!", "success");
 }
 
+// FIX: Đóng modal khi click outside
 window.addEventListener("click", function (e) {
   document.querySelectorAll(".modal").forEach((modal) => {
-    if (e.target === modal) modal.style.display = "none";
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
   });
 });
 
